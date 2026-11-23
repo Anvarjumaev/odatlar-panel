@@ -128,7 +128,7 @@
     }
   }
 
-  function renderHabit(row, rowIndex, elapsed) {
+  function renderHabit(row, rowIndex, elapsed, readOnly = false) {
     const name = escapeHtml(row[1]);
     const count = Array.from({ length: elapsed }, (_, index) => done(row, index)).filter(Boolean).length;
     const cells = [];
@@ -140,18 +140,18 @@
       const value = done(row, index);
       const key = `${row[0]}:${iso}`;
       const changed = state.changes.has(key);
-      const locked = !isEditable(index);
+      const locked = readOnly || !isEditable(index);
       cells.push(`
         <div class="day-column">
           <div class="day-label">${escapeHtml(label)}<span class="day-number">${number}</span></div>
           <button class="habit-cell ${value ? "done" : ""} ${index === todayIndex() ? "today" : ""} ${locked ? "locked" : ""} ${changed ? "changed" : ""}"
-                  data-row="${rowIndex}" data-index="${index}" type="button" ${locked ? "disabled" : ""}
+                  ${readOnly ? "" : `data-row="${rowIndex}"`} data-index="${index}" type="button" ${locked ? "disabled" : ""}
                   aria-label="${name}, ${iso}, ${value ? "bajarildi" : "bajarilmadi"}">${value ? "✓" : ""}</button>
         </div>`);
     }
     return `
       <article class="habit-card" style="animation-delay:${rowIndex * 35}ms">
-        <div class="habit-header"><span class="habit-name">${name}</span><span class="habit-count">${count}/${elapsed}</span></div>
+        <div class="habit-header"><span class="habit-name">${name}</span><span class="habit-count">${readOnly ? "Rasm orqali" : `${count}/${elapsed}`}</span></div>
         <div class="days-scroll"><div class="days" style="--days:${state.data.D}">${cells.join("")}</div></div>
       </article>`;
   }
@@ -165,6 +165,7 @@
     }
     $("dashboard").hidden = false;
     $("emptyState").hidden = true;
+    const wakeRow = state.data.h.find((row) => Number(row[0]) === 0);
     const rows = state.data.h.filter((row) => Number(row[0]) !== 0);
     const { elapsed, current, longest } = chainStats(rows);
     const total = rows.length * elapsed;
@@ -183,7 +184,9 @@
     $("dayValue").textContent = `${elapsed}/${state.data.D}`;
     $("editHint").textContent = elapsed === 0 ? "Ertaga" : (Number(state.data.ey) ? "Bugun + kecha" : "Bugun");
     renderWake();
-    $("habitList").innerHTML = rows.length ? rows.map((row, index) => renderHabit(row, index, elapsed)).join("") : `<div class="empty-state card"><h2>Odatlar yo‘q</h2><p class="muted">Avval bot orqali odat qo‘shing.</p></div>`;
+    const wakeMarkup = wakeRow ? renderHabit(wakeRow, 0, elapsed, true) : "";
+    const habitMarkup = rows.map((row, index) => renderHabit(row, index, elapsed)).join("");
+    $("habitList").innerHTML = wakeMarkup + (habitMarkup || `<div class="empty-state card"><h2>Odatlar yo‘q</h2><p class="muted">Avval bot orqali odat qo‘shing.</p></div>`);
     $("saveButton").hidden = Boolean(tg);
     if (tg && tg.MainButton) {
       if (state.changes.size) tg.MainButton.enable(); else tg.MainButton.disable();
