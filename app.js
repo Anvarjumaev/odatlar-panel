@@ -20,6 +20,12 @@
 
   function parseDate(iso) { return new Date(`${iso}T00:00:00Z`); }
 
+  function formatDate(iso) {
+    return parseDate(iso).toLocaleDateString("uz-UZ", {
+      day: "numeric", month: "long", timeZone: "UTC",
+    });
+  }
+
   function dateAt(index) {
     const day = parseDate(state.data.s);
     day.setUTCDate(day.getUTCDate() + index);
@@ -31,7 +37,7 @@
   }
 
   function todayIndex() {
-    return Math.max(0, Math.min(state.data.D - 1, dayIndex(state.data.t)));
+    return Math.min(state.data.D - 1, dayIndex(state.data.t));
   }
 
   function baseDone(row, index) {
@@ -103,6 +109,11 @@
     const title = $("wakeTitle");
     const subtitle = $("wakeSubtitle");
     card.classList.remove("is-done", "is-late");
+    if (todayIndex() < 0) {
+      title.textContent = "Zanjir ertaga boshlanadi";
+      subtitle.textContent = `${formatDate(state.data.s)} · Bugun tayyorgarlik kuni`;
+      return;
+    }
     if (Number(state.data.wt) === 1) {
       card.classList.add("is-done");
       title.textContent = "Vaqtida turdingiz!";
@@ -161,14 +172,16 @@
     const percent = total ? Math.round((completed / total) * 100) : 0;
 
     $("greeting").textContent = state.data.n ? `Salom, ${state.data.n}` : "Bugungi reja";
-    $("heroTitle").textContent = `${elapsed}-kunni davom ettiring`;
-    $("heroSubtitle").textContent = percent === 100 ? "Bugungi barcha odatlar bajarildi — ajoyib!" : "Har bir belgi — oldinga yana bir qadam.";
+    $("heroTitle").textContent = elapsed === 0 ? "Boshlanish ertaga" : `${elapsed}-kunni davom ettiring`;
+    $("heroSubtitle").textContent = elapsed === 0
+      ? `Boshlanish sanasi: ${formatDate(state.data.s)}`
+      : (percent === 100 ? "Bugungi barcha odatlar bajarildi — ajoyib!" : "Har bir belgi — oldinga yana bir qadam.");
     $("progressValue").textContent = `${percent}%`;
     $("progressRing").style.setProperty("--progress", `${percent}%`);
     $("streakValue").textContent = current;
     $("longestValue").textContent = longest;
     $("dayValue").textContent = `${elapsed}/${state.data.D}`;
-    $("editHint").textContent = Number(state.data.ey) ? "Bugun + kecha" : "Bugun";
+    $("editHint").textContent = elapsed === 0 ? "Ertaga" : (Number(state.data.ey) ? "Bugun + kecha" : "Bugun");
     renderWake();
     $("habitList").innerHTML = rows.length ? rows.map((row, index) => renderHabit(row, index, elapsed)).join("") : `<div class="empty-state card"><h2>Odatlar yo‘q</h2><p class="muted">Avval bot orqali odat qo‘shing.</p></div>`;
     $("saveButton").hidden = Boolean(tg);
