@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Odatlar</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f1efe9; --card: #f7f6f1; --ink: #161514; --grey: #57554f; --muted: #8c8a85;
+    --miss: #d6d4cf; --future: #e8e6e0; --red: #e0312f;
+    --border: 4px solid var(--ink);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--paper); color: var(--ink); }
+  body {
+    font-family: "Poppins", "Segoe UI", system-ui, sans-serif;
+    padding: env(safe-area-inset-top, 0) 0 calc(84px + env(safe-area-inset-bottom, 0));
+  }
+  main { max-width: 480px; margin: 0 auto; padding: 16px 14px; }
+  .view { display: none; }
+  .view.on { display: block; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+  .card { background: var(--card); border: var(--border); padding: 18px; margin-bottom: 14px; }
+
+  /* hero */
+  .hero { background: var(--ink); color: var(--paper); border-color: var(--ink); position: relative; }
+  .hero .month { font-weight: 600; font-size: 13px; color: #a9a6a0; margin: 0; }
+  .hero .day { font-weight: 900; font-size: 76px; line-height: .95; margin: 6px 0 0; letter-spacing: -2px; }
+  .hero .day small { font-size: 30px; color: #8c8a85; letter-spacing: 0; }
+  .hero .week { font-weight: 700; font-size: 17px; margin: 8px 0 2px; }
+  .hero .streak { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; color: #cfccc5; }
+  .hero .streak b { color: var(--paper); }
+  .hero .badge { position: absolute; top: 16px; right: 16px; background: var(--red); color: #fff;
+    font-weight: 900; font-size: 20px; width: 46px; height: 46px; display: grid; place-items: center; }
+  .chain { display: grid; grid-template-columns: repeat(21, 1fr); gap: 3px; margin-top: 16px; }
+  .chain i { aspect-ratio: 1; background: #33312e; }
+  .chain i.ok { background: var(--paper); }
+  .chain i.now { outline: 2px solid var(--red); outline-offset: 1px; }
+
+  /* proverb */
+  .wise { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .wise p { margin: 0; }
+  .wise .lbl { font-weight: 600; font-size: 13px; color: #a9a6a0; }
+  .wise .txt { font-weight: 700; font-size: 21px; line-height: 1.3; margin: 8px 0 6px; }
+  .wise .src { font-weight: 600; font-size: 14px; color: #cfccc5; }
+  .share { margin-top: 16px; width: 100%; background: transparent; border: 3px solid var(--paper);
+    color: var(--paper); font-weight: 700; padding: 12px; font-size: 15px; display: flex; gap: 8px;
+    align-items: center; justify-content: center; }
+
+  /* habits */
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .h2 { font-weight: 900; font-size: 18px; margin: 0; }
+  .seg { display: flex; background: var(--future); padding: 4px; }
+  .seg button { border: 0; background: transparent; padding: 8px 14px; font-weight: 600; font-size: 14px; color: var(--grey); }
+  .seg button.on { background: var(--card); color: var(--ink); font-weight: 700; }
+  .seg button:disabled { opacity: .4; cursor: default; }
+  .count { font-weight: 900; font-size: 40px; margin: 12px 0 4px; }
+  .count small { font-size: 22px; color: var(--grey); }
+  .hint { font-size: 13px; color: var(--muted); font-weight: 500; margin: 0 0 12px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .habit { border: 3px solid var(--ink); background: var(--card); padding: 12px; text-align: left;
+    display: flex; gap: 10px; align-items: flex-start; min-height: 84px; transition: background .15s, color .15s; }
+  .habit .dot { flex: none; width: 26px; height: 26px; border: 3px solid var(--ink); border-radius: 50%;
+    display: grid; place-items: center; margin-top: 1px; }
+  .habit .nm { font-weight: 600; font-size: 14px; line-height: 1.3; }
+  .habit .sub { display: block; font-size: 12px; color: var(--muted); font-weight: 500; margin-top: 4px; }
+  .habit.done { background: var(--ink); color: var(--paper); }
+  .habit.done .dot { border-color: var(--paper); background: var(--paper); }
+  .habit.done .sub { color: #a9a6a0; }
+  .habit.locked { cursor: default; border-style: dashed; }
+  .habit.locked.done { border-style: solid; }
+  .habit.late .dot { border-color: var(--red); }
+
+  /* tracker */
+  .big { font-weight: 900; font-size: 64px; line-height: 1; letter-spacing: -1px; }
+  .big small { font-size: 26px; color: var(--grey); letter-spacing: 0; }
+  .pct { font-weight: 700; color: var(--grey); font-size: 17px; margin-top: 4px; }
+  .fire { text-align: right; }
+  .fire .n { font-weight: 900; font-size: 34px; display: flex; gap: 6px; align-items: center; justify-content: flex-end; }
+  .fire .l { font-size: 13px; color: var(--grey); font-weight: 500; }
+  .tgrid { display: grid; gap: 3px; margin-top: 16px; }
+  .tgrid i { aspect-ratio: 1; background: var(--future); }
+  .tgrid i.miss { background: var(--miss); }
+  .tgrid i.ok { background: var(--ink); }
+  .tgrid i.today { box-shadow: inset 0 0 0 2px var(--red); }
+  .tabs { display: flex; background: var(--future); padding: 5px; margin-bottom: 14px; }
+  .tabs button { flex: 1; border: 0; background: transparent; padding: 11px 4px; font-weight: 600; color: var(--grey); font-size: 15px; }
+  .tabs button.on { background: var(--card); color: var(--ink); font-weight: 700; }
+  .wk { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .wk col.c-nm { width: 30%; } .wk col.c-ct { width: 12%; }
+  .wk th { font-size: 12px; font-weight: 700; color: var(--muted); padding: 0 0 6px; text-align: center; line-height: 1.2; }
+  .wk th.today { color: var(--ink); }
+  .wk td { padding: 4px 1px; text-align: center; }
+  .wk td.nm { text-align: left; font-weight: 600; font-size: 13px; max-width: 110px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; padding-right: 6px; }
+  .wk td.ct { font-weight: 700; font-size: 13px; color: var(--grey); text-align: right; }
+  .sq { width: min(26px, 100%); aspect-ratio: 1; display: inline-grid; place-items: center; background: var(--future); border-radius: 5px; }
+  .sq.miss { background: var(--miss); }
+  .sq.ok { background: var(--ink); }
+  .sq.today { box-shadow: 0 0 0 2px var(--red); }
+
+  /* results */
+  .res { padding: 12px 0; border-top: 2px solid var(--future); }
+  .res:first-of-type { border-top: 0; }
+  .res .top { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; font-size: 15px; }
+  .res .top span:last-child { font-weight: 700; color: var(--grey); white-space: nowrap; }
+  .bar { height: 12px; background: var(--future); margin-top: 8px; }
+  .bar i { display: block; height: 100%; background: var(--ink); }
+  .res .meta { font-size: 12px; color: var(--muted); margin-top: 6px; font-weight: 500; }
+  .stamp { text-align: center; font-size: 12px; color: var(--muted); margin: 4px 0 10px; }
+
+  /* nav */
+  nav { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 3px solid var(--ink);
+    padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0)); }
+  nav .in { max-width: 480px; margin: 0 auto; display: flex; }
+  nav button { flex: 1; border: 0; background: transparent; padding: 6px 0; display: flex; flex-direction: column;
+    align-items: center; gap: 3px; font-weight: 600; font-size: 12px; color: var(--grey); }
+  nav button svg { width: 24px; height: 24px; }
+  nav button.on { color: var(--red); }
+  .save { display: none; position: fixed; left: 14px; right: 14px; bottom: calc(76px + env(safe-area-inset-bottom, 0));
+    max-width: 452px; margin: 0 auto; background: var(--red); color: #fff; border: 0; padding: 15px; font-weight: 700; font-size: 16px; }
+  .save.show { display: block; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <!-- BUGUN -->
+  <section class="view on" id="v-bugun">
+    <div class="card hero">
+      <p class="month" id="hMonth"></p>
+      <p class="day" id="hDay"></p>
+      <p class="week" id="hWeek"></p>
+      <div class="streak"><span class="flame"></span> Seriya <b id="hStreak">0</b></div>
+      <div class="badge" id="hBadge"></div>
+      <div class="chain" id="hChain" aria-label="21 kunlik zanjir"></div>
+    </div>
+
+    <div class="card wise">
+      <p class="lbl" id="wLbl"></p>
+      <p class="txt" id="wTxt"></p>
+      <p class="src">— O'zbek xalq maqoli</p>
+      <button class="share" id="wShare">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        Ulashish
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <p class="h2" id="oTitle"></p>
+        <div class="seg">
+          <button id="segT" class="on">Bugun</button>
+          <button id="segY">Kecha</button>
+        </div>
+      </div>
+      <p class="count" id="oCount"></p>
+      <p class="hint" id="oHint"></p>
+      <div class="grid2" id="oGrid"></div>
+    </div>
+    <p class="stamp" id="stamp"></p>
+  </section>
+
+  <!-- TREKER -->
+  <section class="view" id="v-treker">
+    <div class="card">
+      <div class="row" style="align-items:flex-start">
+        <div>
+          <div class="big" id="tDone"></div>
+          <div class="pct" id="tPct"></div>
+        </div>
+        <div class="fire">
+          <div class="n"><span class="flame red"></span><span id="tStreak"></span></div>
+          <div class="l" id="tLongest"></div>
+        </div>
+      </div>
+      <div class="tgrid" id="tGrid"></div>
+    </div>
+    <div class="card">
+      <div class="tabs" id="wTabs"></div>
+      <table class="wk" id="wTable"></table>
+    </div>
+  </section>
+
+  <!-- NATIJA -->
+  <section class="view" id="v-natija">
+    <div class="card">
+      <p class="h2">Natija</p>
+      <p class="hint" id="rHint" style="margin-top:6px"></p>
+      <div id="rList"></div>
+    </div>
+  </section>
+</main>
+
+<button class="save" id="saveBtn">Saqlash</button>
+
+<nav>
+  <div class="in">
+    <button class="on" data-v="bugun">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/></svg>Bugun</button>
+    <button data-v="treker">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"/></svg>Treker</button>
+    <button data-v="natija">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M5 20V12M12 20V4M19 20v-6"/></svg>Natija</button>
+  </div>
+</nav>
+
+<script>
+(() => {
+  const tg = window.Telegram && Telegram.WebApp && Telegram.WebApp.initData !== undefined ? Telegram.WebApp : null;
+  const inTelegram = !!(tg && tg.platform && tg.platform !== "unknown");
+
+  const MONTHS = ["yanvar","fevral","mart","aprel","may","iyun","iyul","avgust","sentabr","oktabr","noyabr","dekabr"];
+  const WD = ["Du","Se","Ch","Pa","Ju","Sh","Ya"];
+  const PROVERBS = [
+    "Erta turganning rizqi ortiq.",
+    "Bugungi ishni ertaga qo'yma.",
+    "Sabr tagi — sariq oltin.",
+    "Tomchi-tomchi ko'l bo'lur.",
+    "Oz-oz o'rganib dono bo'lur, qatra-qatra yig'ilib daryo bo'lur.",
+    "Mehnatning tagi — rohat.",
+    "Sog'lik — tuman boylik.",
+    "Avval o'yla, keyin so'yla.",
+    "Ming eshitgandan bir ko'rgan yaxshi.",
+    "Yaxshi gap bilan ilon inidan chiqar.",
+    "Har ishning vaqti bor.",
+    "Do'st boshga, dushman oyoqqa qaraydi.",
+    "Yolg'onning umri qisqa.",
+    "Qush uyasida ko'rganini qiladi.",
+    "Ilm — aql chirog'i.",
+    "Til — dilning kaliti.",
+    "Ko'z qo'rqoq, qo'l botir.",
+    "Hunarli kishi xor bo'lmas.",
+    "Ishlagan tishlaydi.",
+    "Kitob — bilim manbai.",
+    "Yaxshidan bog' qoladi, yomondan dog' qoladi."
+  ];
+
+  // ---------- data from the bot (?d=base64url JSON); demo data when opened in a browser
+  function decode(s) {
+    s = s.replace(/-/g, "+").replace(/_/g, "/");
+    while (s.length % 4) s += "=";
+    const bytes = Uint8Array.from(atob(s), c => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+  function demo() {
+    const t = new Date(), s = new Date(t); s.setDate(t.getDate() - 12);
+    const iso = d => d.toISOString().slice(0, 10);
+    const names = ["Erta turish","Iliq suv ichish","Kunni ehson bilan boshlash","10.001 qadam piyoda yurish",
+      "Kunni rejalashtirish","Telefondan parhez (4 soat)","Mutolaa (20 bet)","Fikrlarni qog'ozga tushirish"];
+    return { n: "Demo", b: "", s: iso(s), t: iso(t), D: 21, w: "04:30–04:45", wt: 0, ey: 1, u: "",
+      h: names.map((nm, i) => [i, nm, (1 << 12) - 1 - (i % 3 ? 0 : 1 << (i + 2)) - (i === 4 ? 1 << 7 : 0)]) };
+  }
+  let data;
+  try {
+    const q = new URLSearchParams(location.search).get("d");
+    data = q ? decode(q) : demo();
+  } catch (e) { data = demo(); }
+
+  const DAY = 86400000;
+  const pd = s => new Date(s + "T00:00:00Z");
+  const start = pd(data.s), today = pd(data.t), D = data.D || 21;
+  const ti = Math.round((today - start) / DAY);           // today's index in the chain
+  const elapsed = Math.max(0, Math.min(D, ti + 1));
+  const dateAt = i => new Date(start.getTime() + i * DAY);
+  const isoAt = i => dateAt(i).toISOString().slice(0, 10);
+
+  const habits = data.h.map(([id, name, bits]) => ({ id, name, bits, locked: id === 0 }));
+  const pending = new Map();                                // "id|dayIndex" -> 0/1
+  const has = (h, i) => {
+    const k = h.id + "|" + i;
+    if (pending.has(k)) return pending.get(k) === 1;
+    return i >= 0 && i < 31 && ((h.bits >>> i) & 1) === 1;
+  };
+
+  // ---------- helpers
+  const $ = id => document.getElementById(id);
+  const flameSVG = (color) =>
+    `<svg width="18" height="22" viewBox="0 0 18 22" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true">
+      <path d="M9 1c1.5 3.5 6.5 6.5 6.5 12A6.5 6.5 0 0 1 2.5 13c0-2.8 1.3-4.6 2.7-6 .3 1.8 1 3 2.1 3.6C7.4 7.2 7.6 3.8 9 1z"/>
+      <path d="M9 13.5c.9 1 2 1.9 2 3.4a2 2 0 0 1-4 0c0-1.5 1-2.4 2-3.4z"/></svg>`;
+  document.querySelectorAll(".flame").forEach(el => el.innerHTML = flameSVG(el.classList.contains("red") ? "#e0312f" : "#e0312f"));
+
+  function chainFlags() {
+    const f = [];
+    for (let i = 0; i < elapsed; i++) f.push(habits.length > 0 && habits.every(h => has(h, i)));
+    return f;
+  }
+  function runs(flags) {
+    let longest = 0, run = 0;
+    flags.forEach(x => { run = x ? run + 1 : 0; longest = Math.max(longest, run); });
+    const tail = flags.length && flags[flags.length - 1] ? flags : flags.slice(0, -1);
+    let cur = 0; for (let i = tail.length - 1; i >= 0 && tail[i]; i--) cur++;
+    return [cur, longest];
+  }
+  function habitRuns(h) {
+    const f = []; for (let i = 0; i < elapsed; i++) f.push(has(h, i));
+    return runs(f);
+  }
+
+  // ---------- BUGUN
+  let dayIdx = Math.min(ti, D - 1);
+  const yesterdayOk = data.ey && ti - 1 >= 0 && ti - 1 < D;
+
+  function renderHero() {
+    const flags = chainFlags(), [cur] = runs(flags);
+    $("hMonth").textContent = `${D} kunlik zanjir, ${today.getUTCFullYear()}-${MONTHS[today.getUTCMonth()]}`;
+    $("hDay").innerHTML = `${Math.min(ti + 1, D)}<small>/${D}</small>`;
+    $("hWeek").textContent = ti >= D ? "Zanjir tugadi" : `${Math.floor(ti / 7) + 1}-hafta`;
+    $("hStreak").textContent = cur;
+    $("hBadge").textContent = (data.n || "?").trim().charAt(0).toUpperCase();
+    $("hChain").innerHTML = Array.from({ length: D }, (_, i) =>
+      `<i class="${flags[i] ? "ok" : ""}${i === ti ? " now" : ""}"></i>`).join("");
+    $("hChain").style.gridTemplateColumns = `repeat(${D}, 1fr)`;
+  }
+
+  function renderWise() {
+    const n = Math.min(ti, D - 1);
+    const p = PROVERBS[((n % PROVERBS.length) + PROVERBS.length) % PROVERBS.length];
+    $("wLbl").textContent = `Kun hikmati, ${n + 1}-kun`;
+    $("wTxt").textContent = p;
+    $("wShare").onclick = () => {
+      const text = `${p}\n— O'zbek xalq maqoli`;
+      const url = data.b ? `https://t.me/${data.b}` : "https://t.me";
+      const link = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+      if (inTelegram) tg.openTelegramLink(link); else window.open(link, "_blank");
+    };
+  }
+
+  function renderHabits() {
+    const done = habits.filter(h => has(h, dayIdx)).length;
+    $("oTitle").textContent = `${habits.length} odat`;
+    $("oCount").innerHTML = `${done}<small>/${habits.length}</small>`;
+    $("segT").classList.toggle("on", dayIdx === ti);
+    $("segY").classList.toggle("on", dayIdx === ti - 1);
+    $("segY").disabled = !yesterdayOk;
+    $("oHint").textContent = dayIdx === ti
+      ? "Bajarganlaringizni bosing, keyin Saqlash."
+      : "Kechagi kunni bugun 12:00 gacha o'zgartirish mumkin.";
+    if (ti >= D || ti < 0) $("oHint").textContent = "Bu zanjir tugagan. Yangisini boshlash: botga /yangi yuboring.";
+
+    $("oGrid").innerHTML = "";
+    habits.forEach(h => {
+      const on = has(h, dayIdx);
+      const b = document.createElement("button");
+      let cls = "habit" + (on ? " done" : "") + (h.locked ? " locked" : "");
+      let sub = "";
+      if (h.locked) {
+        if (on) sub = "Rasm qabul qilindi";
+        else if (dayIdx === ti && data.wt === 2) { sub = "Kech qoldi"; cls += " late"; }
+        else sub = `Rasm ${data.w || ""} oralig'ida botga`;
+      }
+      b.className = cls;
+      b.setAttribute("aria-pressed", on);
+      b.innerHTML = `<span class="dot">${on ? '<svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 7.5 5.5 11 12 3.5" fill="none" stroke="#161514" stroke-width="2.6"/></svg>' : ""}</span>
+        <span class="nm">${esc(h.name)}${sub ? `<span class="sub">${esc(sub)}</span>` : ""}</span>`;
+      if (!h.locked && dayIdx >= 0 && dayIdx < D && ti < D) {
+        b.onclick = () => {
+          const k = h.id + "|" + dayIdx, orig = ((h.bits >>> dayIdx) & 1) === 1;
+          const next = !has(h, dayIdx);
+          if (next === orig) pending.delete(k); else pending.set(k, next ? 1 : 0);
+          if (inTelegram && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
+          renderAll();
+        };
+      } else {
+        b.setAttribute("aria-disabled", "true");
+      }
+      $("oGrid").appendChild(b);
+    });
+  }
+  $("segT").onclick = () => { dayIdx = ti; renderHabits(); };
+  $("segY").onclick = () => { if (yesterdayOk) { dayIdx = ti - 1; renderHabits(); } };
+
+  // ---------- TREKER
+  let week = Math.max(1, Math.min(Math.ceil(D / 7), Math.ceil(elapsed / 7) || 1));
+  function renderTracker() {
+    const total = habits.length * D;
+    let done = 0;
+    habits.forEach(h => { for (let i = 0; i < D; i++) if (has(h, i)) done++; });
+    const [cur, longest] = runs(chainFlags());
+    $("tDone").innerHTML = `${done}<small>/${total}</small>`;
+    $("tPct").textContent = `${total ? Math.round(done * 100 / total) : 0}% bajarildi`;
+    $("tStreak").textContent = cur;
+    $("tLongest").textContent = `seriya, eng uzuni ${longest}`;
+    const g = $("tGrid");
+    g.style.gridTemplateColumns = `repeat(${D}, 1fr)`;
+    g.innerHTML = habits.map(h => Array.from({ length: D }, (_, i) => {
+      const c = has(h, i) ? "ok" : i < elapsed ? "miss" : "";
+      return `<i class="${c}${i === ti ? " today" : ""}"></i>`;
+    }).join("")).join("");
+
+    const nW = Math.ceil(D / 7);
+    $("wTabs").innerHTML = Array.from({ length: nW }, (_, i) =>
+      `<button class="${i + 1 === week ? "on" : ""}" data-w="${i + 1}">${i + 1}-hafta</button>`).join("");
+    $("wTabs").querySelectorAll("button").forEach(b => b.onclick = () => { week = +b.dataset.w; renderTracker(); });
+
+    const idx = []; for (let i = (week - 1) * 7; i < Math.min(D, week * 7); i++) idx.push(i);
+    let html = '<colgroup><col class="c-nm">' + idx.map(() => "<col>").join("") + '<col class="c-ct"></colgroup><tr><th></th>' + idx.map(i => {
+      const d = dateAt(i);
+      return `<th class="${i === ti ? "today" : ""}">${WD[(d.getUTCDay() + 6) % 7]}<br>${d.getUTCDate()}</th>`;
+    }).join("") + "<th></th></tr>";
+    habits.forEach(h => {
+      let n = 0;
+      html += `<tr><td class="nm">${esc(h.name)}</td>` + idx.map(i => {
+        const ok = has(h, i); if (ok) n++;
+        const c = ok ? "ok" : i < ti ? "miss" : "";
+        const mark = ok ? '<svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 7.5 5.5 11 12 3.5" fill="none" stroke="#fff" stroke-width="2.4"/></svg>' : "";
+        return `<td><span class="sq ${c}${i === ti ? " today" : ""}">${mark}</span></td>`;
+      }).join("") + `<td class="ct">${n}/${idx.length}</td></tr>`;
+    });
+    $("wTable").innerHTML = html;
+  }
+
+  // ---------- NATIJA
+  function renderResults() {
+    const rows = habits.map(h => {
+      let n = 0; for (let i = 0; i < elapsed; i++) if (has(h, i)) n++;
+      const [cur, best] = habitRuns(h);
+      return { h, n, cur, best, pct: elapsed ? Math.round(n * 100 / elapsed) : 0 };
+    }).sort((a, b) => b.pct - a.pct);
+    const strong = rows[0], weak = rows[rows.length - 1];
+    $("rHint").textContent = elapsed
+      ? `${elapsed} kun ichida. Eng yaxshisi: ${strong.h.name}. Ko'proq e'tibor kerak: ${weak.h.name}.`
+      : "Natijalar birinchi kundan keyin chiqadi.";
+    $("rList").innerHTML = rows.map(r => `
+      <div class="res">
+        <div class="top"><span>${esc(r.h.name)}</span><span>${r.n}/${elapsed} · ${r.pct}%</span></div>
+        <div class="bar"><i style="width:${r.pct}%"></i></div>
+        <div class="meta">Hozirgi seriya ${r.cur} kun, eng uzuni ${r.best} kun</div>
+      </div>`).join("");
+  }
+
+  // ---------- save
+  function updateSave() {
+    const n = pending.size;
+    const label = `Saqlash (${n})`;
+    if (inTelegram) {
+      tg.MainButton.setParams({ text: label, color: "#e0312f", text_color: "#ffffff" });
+      n ? tg.MainButton.show() : tg.MainButton.hide();
+    } else {
+      $("saveBtn").textContent = label;
+      $("saveBtn").classList.toggle("show", n > 0);
+    }
+  }
+  function save() {
+    const c = [...pending].map(([k, v]) => { const [id, i] = k.split("|"); return [+id, isoAt(+i), v]; });
+    const payload = JSON.stringify({ v: 1, c });
+    if (inTelegram) tg.sendData(payload);   // the bot saves it; Telegram closes the panel
+    else alert("Telegramdan tashqarida saqlab bo'lmaydi.\n" + payload);
+  }
+  $("saveBtn").onclick = save;
+  if (inTelegram) tg.MainButton.onClick(save);
+
+  // ---------- nav
+  document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+    document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+    document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === "v-" + b.dataset.v));
+    window.scrollTo(0, 0);
+  });
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+  function renderAll() { renderHero(); renderHabits(); renderTracker(); renderResults(); updateSave(); }
+
+  $("stamp").textContent = data.u ? `Ma'lumot soat ${data.u} holatiga. Yangilash: botga /panel` : "";
+  if (inTelegram) {
+    tg.ready(); tg.expand();
+    try { tg.setHeaderColor("#f1efe9"); tg.setBackgroundColor("#f1efe9"); } catch (e) {}
+  }
+  renderWise();
+  renderAll();
+})();
+</script>
+</body>
+</html>
