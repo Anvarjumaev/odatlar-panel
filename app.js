@@ -5,6 +5,19 @@
   const state = { data: null, changes: new Map() };
   const $ = (id) => document.getElementById(id);
 
+  const DAILY_QUOTES = [
+    { text: "Katta o‘zgarishlar har kuni takrorlangan kichik qadamlardan boshlanadi.", author: "Odatlar qaydnomasi" },
+    { text: "Bugungi intizom — ertangi xotirjamlikning eng qisqa yo‘lidir.", author: "Odatlar qaydnomasi" },
+    { text: "Mukammallikni emas, davomiylikni tanlang.", author: "Odatlar qaydnomasi" },
+    { text: "O‘zingizga bergan va’dangizni bajargan har bir kun ishonchni oshiradi.", author: "Odatlar qaydnomasi" },
+    { text: "Bir kunni yaxshi o‘tkazish — yaxshi hayotni qurishning bir bo‘lagidir.", author: "Odatlar qaydnomasi" },
+    { text: "Sekin yurish mumkin, lekin to‘xtab qolmaslik muhim.", author: "Odatlar qaydnomasi" },
+    { text: "Odatlar kayfiyatga emas, tanlangan yo‘lga tayanadi.", author: "Odatlar qaydnomasi" },
+    { text: "Har bir belgi: ‘Men o‘zimni tanladim’, degan kichik dalildir.", author: "Odatlar qaydnomasi" },
+    { text: "Bugun boshlash uchun eng yaxshi vaqt — hozir; davom ettirish uchun esa ertaga yana qayting.", author: "Odatlar qaydnomasi" },
+    { text: "Kichik g‘alabalarni ko‘ring — katta yo‘l shulardan iborat.", author: "Odatlar qaydnomasi" },
+  ];
+
   function escapeHtml(value) {
     return String(value).replace(/[&<>'"]/g, (char) => ({
       "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
@@ -24,6 +37,14 @@
     return parseDate(iso).toLocaleDateString("uz-UZ", {
       day: "numeric", month: "long", timeZone: "UTC",
     });
+  }
+
+  function renderQuote() {
+    if (!state.data) return;
+    const dayNumber = Math.floor(parseDate(state.data.t).getTime() / 86400000);
+    const quote = DAILY_QUOTES[((dayNumber % DAILY_QUOTES.length) + DAILY_QUOTES.length) % DAILY_QUOTES.length];
+    $("quoteText").textContent = quote.text;
+    $("quoteAuthor").textContent = quote.author;
   }
 
   function dateAt(index) {
@@ -173,6 +194,7 @@
     const percent = total ? Math.round((completed / total) * 100) : 0;
 
     $("greeting").textContent = state.data.n ? `Salom, ${state.data.n}` : "Bugungi reja";
+    renderQuote();
     $("heroTitle").textContent = elapsed === 0 ? "Boshlanish ertaga" : `${elapsed}-kunni davom ettiring`;
     $("heroSubtitle").textContent = elapsed === 0
       ? `Boshlanish sanasi: ${formatDate(state.data.s)}`
@@ -187,10 +209,19 @@
     const wakeMarkup = wakeRow ? renderHabit(wakeRow, 0, elapsed, true) : "";
     const habitMarkup = rows.map((row, index) => renderHabit(row, index, elapsed)).join("");
     $("habitList").innerHTML = wakeMarkup + (habitMarkup || `<div class="empty-state card"><h2>Odatlar yo‘q</h2><p class="muted">Avval bot orqali odat qo‘shing.</p></div>`);
-    $("saveButton").hidden = Boolean(tg);
+    const canEdit = elapsed > 0 && rows.length > 0;
+    $("saveButton").hidden = Boolean(tg) || !canEdit;
+    $("saveButton").disabled = !state.changes.size;
     if (tg && tg.MainButton) {
-      if (state.changes.size) tg.MainButton.enable(); else tg.MainButton.disable();
-      tg.MainButton.show();
+      if (!canEdit) {
+        tg.MainButton.setText("Ertaga boshlanadi");
+        tg.MainButton.disable();
+        tg.MainButton.hide();
+      } else {
+        tg.MainButton.setText("Saqlash");
+        if (state.changes.size) tg.MainButton.enable(); else tg.MainButton.disable();
+        tg.MainButton.show();
+      }
     }
   }
 
@@ -206,7 +237,10 @@
   }
 
   function saveChanges() {
-    if (!state.data || !state.changes.size) return;
+    if (!state.data || !state.changes.size) {
+      if (tg && tg.showAlert) tg.showAlert("Saqlash uchun avval odatni belgilang.");
+      return;
+    }
     const payload = JSON.stringify({ c: Array.from(state.changes.values()).map((item) => [item.id, item.day, item.val]) });
     if (tg && tg.sendData) {
       tg.sendData(payload);

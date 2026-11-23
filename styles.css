@@ -47,6 +47,11 @@ button { font: inherit; }
 .hero-card h2 { font-size: clamp(24px, 6vw, 32px); }
 .hero-card p { margin-top: 9px; }
 
+.quote-card { display: flex; align-items: flex-start; gap: 13px; padding: 18px 20px; margin: 12px 0; background: linear-gradient(135deg, var(--soft), var(--card)); }
+.quote-mark { color: var(--accent); font-size: 48px; font-weight: 900; line-height: .8; }
+.quote-card blockquote { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.45; }
+.quote-author { margin: 8px 0 0; color: var(--muted); font-size: 11px; font-weight: 700; }
+
 .progress-ring { --progress: 0%; width: 102px; height: 102px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; background: conic-gradient(var(--accent) var(--progress), var(--miss) 0); position: relative; }
 .progress-ring::before { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: var(--card); }
 .progress-ring span { position: relative; z-index: 1; font-size: 21px; font-weight: 850; }
